@@ -1,0 +1,52 @@
+project : finetune-bactrian-vi
+base_model_name : vistral
+base_model_id : Viet-Mistral/Vistral-7B-Chat
+run_name : ${base_model_name}_${project}
+
+data_args:
+  path_to_data : MBZUAI/Bactrian-X
+  cache_dir : ${hydra:runtime.cwd}/example_data
+  nb_samples : 200
+  split_ratio : 0.2
+
+training_args:
+  output_dir : ${hydra:runtime.cwd}/${run_name}
+  warmup_steps : 1
+  per_device_train_batch_size : 4
+  per_device_eval_batch_size : 4
+  gradient_accumulation_steps : 1
+  gradient_checkpointing : True
+  max_steps : 100
+  learning_rate : 2.5e-4
+  optimizer : paged_adamw_8bit
+  logging_steps : 25
+  logging_dir : ${hydra:runtime.cwd}/logs
+  save_strategy : steps
+  save_steps : 25
+  evaluation_strategy : steps
+  eval_steps : 25
+  do_eval : True
+  train_flag : True
+
+token_args:
+  base_model_id : ${base_model_id}
+  add_eos_token : True
+  add_bos_token : True
+  max_length : 256
+  padding_side : left
+
+
+lora_args:
+  r : 32
+  lora_alpha : 64
+  lora_dropout : 0.05
+
+# defaults:  
+#   - _self_  
+#   - override hydra/hydra_logging: disabled  
+#   - override hydra/job_logging: disabled  
+
+# hydra:
+#   output_subdir: null
+#   run:
+#     dir : .
