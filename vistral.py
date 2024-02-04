@@ -8,7 +8,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from peft import PeftModel
 from datasets import load_dataset
 from peft import prepare_model_for_kbit_training, LoraConfig, get_peft_model, PeftModel
-
+from transformers import TrainerCallback, TrainerState, TrainerControl
 from accelerate import Accelerator, FullyShardedDataParallelPlugin
 from torch.distributed.fsdp.fully_sharded_data_parallel import FullOptimStateDictConfig, FullStateDictConfig 
 
@@ -123,8 +123,6 @@ def define_accelerator(model):
     model = accelerator.prepare_model(model)
     return model
 
-
-from transformers import TrainerCallback, TrainerState, TrainerControl
 
 class PrintLossCallback(TrainerCallback):
     "A callback that prints the training and evaluation loss"
