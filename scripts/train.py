@@ -10,7 +10,7 @@ from datasets import load_dataset
 from peft import prepare_model_for_kbit_training, LoraConfig, get_peft_model, PeftModel
 from transformers import TrainerCallback, TrainerState, TrainerControl
 from accelerate import Accelerator, FullyShardedDataParallelPlugin
-from torch.distributed.fsdp.fully_sharded_data_parallel import FullOptimStateDictConfig, FullStateDictConfig 
+from torch.distributed.fsdp.fully_sharded_data_parallel import FullOptimStateDictConfig, FullStateDictConfig
 
 logging.basicConfig(level=logging.INFO)
 warnings.filterwarnings("ignore")
@@ -49,7 +49,7 @@ def create_prompt(sample):
     else:
         text = f"""### Instruction : \n\n {sample['instruction']} \n ### Input : {sample['input']} \n\n ### Response : \n {sample['output']}"""
         return text
-    
+
 def generate_and_tokenize_prompt(text, tokenizer):
     return tokenizer(create_prompt(text))
 
@@ -99,7 +99,7 @@ def define_tokenizer(config: DictConfig):
 
 def get_lora_config(config: DictConfig):
     lora = LoraConfig(
-        r = config.r, 
+        r = config.r,
         lora_alpha=config.lora_alpha,
         target_modules=["q_proj", "k_proj", "v_proj", "out_proj", "gate_proj", "up_proj", "down_proj", "lm_head"],
         bias="none",
@@ -137,16 +137,16 @@ class PrintLossCallback(TrainerCallback):
             logging.info(f"Step: {state.global_step}, Evaluation Loss: {state.log_history[-1]['eval_loss']}")
 
 
-@hydra.main(config_path="conf", config_name="config_file")
+@hydra.main(config_path="../configs", config_name="vistral_bactrian")
 def main_fn(cfg: DictConfig):
     print(OmegaConf.to_yaml(cfg))
     project = cfg.project
     base_model_name = cfg.base_model_name
     training_args = define_train_args(cfg.training_args)
-    
+
     tokenizer = define_tokenizer(cfg.token_args) # Define tokenizer
     tokenizer.pad_token = tokenizer.eos_token
-    
+
     # Model Configuration
     lora_config = get_lora_config(cfg.lora_args)
     model = load_base_model(cfg.base_model_id) #Define model
@@ -160,15 +160,15 @@ def main_fn(cfg: DictConfig):
     cfg_data = cfg.data_args
     data_vi = load_dataset(path=cfg_data.path_to_data,name='vi',cache_dir=cfg_data.cache_dir, split="train")
     traindata, evaldata = select_small_sample(data_vi, cfg_data.nb_samples, cfg_data.split_ratio)
-    
+
     logging.info("TRAIN DATA STRUCTURE : {}".format(traindata))
-    
+
     tokenized_train = traindata.map(generate_and_tokenize_prompt, fn_kwargs={"tokenizer": tokenizer})
     tokenized_eval = evaldata.map(generate_and_tokenize_prompt, fn_kwargs={"tokenizer": tokenizer})
-    
+
     logging.info("TOKENIZED TRAIN DATA STRUCTURE : {}".format(tokenized_train))
     logging.info("TOKENIZED EVAL DATA STRUCTURE : {}".format(tokenized_eval))
-    
+
     #Define Trainer
     trainer = transformers.Trainer(
         model=model,
@@ -181,6 +181,6 @@ def main_fn(cfg: DictConfig):
     if cfg.training_args.train_flag:
         model.config.use_cache = False  # silence the warnings. Please re-enable for inference!
         trainer.train(resume_from_checkpoint=False)
-        
+
 if __name__ == "__main__":
     main_fn()

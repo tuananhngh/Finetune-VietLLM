@@ -2,6 +2,8 @@
 /mistral-chat-doctor-finetune
 /outputs
 /nouse/
-/vistral_finetune-bactrian-vi 
+/vistral_finetune-bactrian-vi
 /__pycache__
-
+.mypy_cache/
+/logs
+*.pyc
