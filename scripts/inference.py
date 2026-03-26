@@ -18,20 +18,35 @@ SYSTEM_PROMPT = (
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Inference with fine-tuned Vistral model")
-    parser.add_argument("--base-model", type=str, default="Viet-Mistral/Vistral-7B-Chat",
-                        help="Base model ID from HuggingFace")
-    parser.add_argument("--checkpoint", type=str, default="./vistral_finetune-bactrian-vi/checkpoint-100",
-                        help="Path to LoRA checkpoint")
+    parser = argparse.ArgumentParser(
+        description="Inference with fine-tuned Vistral model"
+    )
+    parser.add_argument(
+        "--base-model",
+        type=str,
+        default="Viet-Mistral/Vistral-7B-Chat",
+        help="Base model ID from HuggingFace",
+    )
+    parser.add_argument(
+        "--checkpoint",
+        type=str,
+        default="./vistral_finetune-bactrian-vi/checkpoint-100",
+        help="Path to LoRA checkpoint",
+    )
     parser.add_argument("--max-new-tokens", type=int, default=256)
     parser.add_argument("--temperature", type=float, default=0.5)
     parser.add_argument("--top-k", type=int, default=25)
     parser.add_argument("--top-p", type=float, default=0.5)
     parser.add_argument("--repetition-penalty", type=float, default=1.15)
-    parser.add_argument("--interactive", action="store_true",
-                        help="Run in interactive chat mode")
-    parser.add_argument("--prompt", type=str, default=None,
-                        help="Single prompt to run (non-interactive)")
+    parser.add_argument(
+        "--interactive", action="store_true", help="Run in interactive chat mode"
+    )
+    parser.add_argument(
+        "--prompt",
+        type=str,
+        default=None,
+        help="Single prompt to run (non-interactive)",
+    )
     return parser.parse_args()
 
 
