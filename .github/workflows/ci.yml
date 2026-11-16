@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      smoke:
+        description: "Also run the slow end-to-end smoke test (downloads a tiny model)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  UV_LOCKED: "1" # fail if uv.lock is out of date with pyproject.toml
+  HF_HUB_DISABLE_TELEMETRY: "1"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      # Only the dev tools at their locked versions: no need to install torch & co.
+      - run: uv sync --only-group dev
+      - run: uv run --no-sync ruff check src tests cloud
+      - run: uv run --no-sync ruff format --check src tests cloud
+      - name: uv.lock is up to date
+        run: uv lock --check
+
+  test:
+    name: Unit tests
+    # macOS wheels of torch are CPU/MPS-only (~100 MB) vs ~3 GB of CUDA wheels on Linux,
+    # and it matches the local dev setup. CUDA-only deps are skipped by their markers.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync
+      - run: uv run pytest -m "not slow" -q
+
+  smoke:
+    name: Smoke test (slow)
+    if: github.event_name == 'workflow_dispatch' && inputs.smoke
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync
+      - run: uv run pytest -m slow -q
