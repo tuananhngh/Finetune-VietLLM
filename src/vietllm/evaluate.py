@@ -36,7 +36,7 @@ def run_generate(args: argparse.Namespace) -> None:
 
     import torch
 
-    from .infer import build_parser, generate, load_for_inference
+    from .inference import build_parser, generate, load_for_inference
 
     with open(args.prompts, encoding="utf-8") as fh:
         prompts = [json.loads(line) for line in fh if line.strip()]

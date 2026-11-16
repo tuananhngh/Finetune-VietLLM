@@ -20,7 +20,7 @@ def test_sft_merge_and_generate(tmp_path, monkeypatch):
 
     from types import SimpleNamespace
 
-    from vietllm.infer import generate, load_for_inference
+    from vietllm.inference import generate, load_for_inference
 
     model, tok = load_for_inference(str(out))
     args = SimpleNamespace(

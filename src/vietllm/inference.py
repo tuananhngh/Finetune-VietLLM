@@ -19,9 +19,7 @@ from vietllm.config import DEFAULT_SYSTEM_PROMPT
 from vietllm.device import inference_device_and_dtype
 
 
-def load_for_inference(
-    model_path: str, load_in_4bit: bool = False, trust_remote_code: bool = False
-):
+def load_for_inference(model_path: str, load_in_4bit: bool = False, trust_remote_code: bool = False):
     from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
     device, dtype = inference_device_and_dtype()
@@ -48,9 +46,7 @@ def load_for_inference(
         model = AutoPeftModelForCausalLM.from_pretrained(model_path, **kwargs)
     else:
         model = AutoModelForCausalLM.from_pretrained(model_path, **kwargs)
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_path, trust_remote_code=trust_remote_code
-    )
+    tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=trust_remote_code)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     model.eval()
@@ -82,13 +78,9 @@ def generate(model, tokenizer, messages, args, stream: bool = False) -> str:
     if not stream:
         with torch.inference_mode():
             out = model.generate(**gen_kwargs)
-        return tokenizer.decode(
-            out[0, inputs["input_ids"].shape[1] :], skip_special_tokens=True
-        ).strip()
+        return tokenizer.decode(out[0, inputs["input_ids"].shape[1] :], skip_special_tokens=True).strip()
 
-    streamer = TextIteratorStreamer(
-        tokenizer, skip_prompt=True, skip_special_tokens=True
-    )
+    streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
     # Start a new thread to generate the response
     thread = Thread(target=lambda: model.generate(**gen_kwargs, streamer=streamer))
     thread.start()
@@ -102,15 +94,9 @@ def generate(model, tokenizer, messages, args, stream: bool = False) -> str:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    p.add_argument(
-        "--model", required=True, help="Adapter dir, merged model dir or Hub id"
-    )
-    p.add_argument(
-        "--prompt", default=None, help="Single prompt; omit for interactive chat"
-    )
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--model", required=True, help="Adapter dir, merged model dir or Hub id")
+    p.add_argument("--prompt", default=None, help="Single prompt; omit for interactive chat")
     p.add_argument("--system-prompt", default=DEFAULT_SYSTEM_PROMPT)
     p.add_argument("--max-new-tokens", type=int, default=512)
     p.add_argument("--temperature", type=float, default=0.7)
@@ -129,14 +115,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
-    model, tokenizer = load_for_inference(
-        args.model, args.load_in_4bit, args.trust_remote_code
-    )
-    system = (
-        [{"role": "system", "content": args.system_prompt}]
-        if args.system_prompt
-        else []
-    )
+    model, tokenizer = load_for_inference(args.model, args.load_in_4bit, args.trust_remote_code)
+    system = [{"role": "system", "content": args.system_prompt}] if args.system_prompt else []
 
     if args.prompt:
         print(

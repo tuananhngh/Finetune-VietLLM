@@ -35,10 +35,7 @@ def main(argv: list[str] | None = None) -> None:
     state = PartialState()
     setup_logging(state.is_main_process)
 
-    if (
-        data_args.conversation_format == "prompt_completion"
-        and training_args.assistant_only_loss
-    ):
+    if data_args.conversation_format == "prompt_completion" and training_args.assistant_only_loss:
         raise ValueError(
             "Use completion_only_loss (default) with conversation_format=prompt_completion, "
             "not assistant_only_loss"
@@ -53,9 +50,7 @@ def main(argv: list[str] | None = None) -> None:
 
     # Preprocess once on the main process; other ranks read the datasets cache.
     with state.main_process_first():
-        train_ds, eval_ds = build_datasets(
-            specs, data_args, training_args.seed, task="sft"
-        )
+        train_ds, eval_ds = build_datasets(specs, data_args, training_args.seed, task="sft")
     if eval_ds is None:
         training_args.eval_strategy = "no"
 
@@ -100,23 +95,14 @@ def main(argv: list[str] | None = None) -> None:
 
     state.wait_for_everyone()  # Wait for all processes to finish
     # Only merge the model on the main process
-    if (
-        run_args.merge_after_training
-        and peft_config is not None
-        and state.is_main_process
-    ):
+    if run_args.merge_after_training and peft_config is not None and state.is_main_process:
         from vietllm.merge import merge_adapter
 
         merge_adapter(
             adapter_path=training_args.output_dir,
-            output_dir=run_args.merged_output_dir
-            or os.path.join(training_args.output_dir, "merged"),
+            output_dir=run_args.merged_output_dir or os.path.join(training_args.output_dir, "merged"),
             push_to_hub=run_args.push_merged_to_hub,
-            hub_model_id=(
-                (training_args.hub_model_id + "-merged")
-                if training_args.hub_model_id
-                else None
-            ),
+            hub_model_id=((training_args.hub_model_id + "-merged") if training_args.hub_model_id else None),
             trust_remote_code=training_args.trust_remote_code,
         )
 

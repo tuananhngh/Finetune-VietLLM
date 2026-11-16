@@ -37,9 +37,7 @@ def main(argv: list[str] | None = None) -> None:
 
     tokenizer = load_tokenizer(model_args, training_args.trust_remote_code)
     with state.main_process_first():
-        train_ds, eval_ds = build_datasets(
-            specs, data_args, training_args.seed, task="dpo"
-        )
+        train_ds, eval_ds = build_datasets(specs, data_args, training_args.seed, task="dpo")
     if eval_ds is None:
         training_args.eval_strategy = "no"
 
@@ -74,34 +72,23 @@ def main(argv: list[str] | None = None) -> None:
         trainer.save_metrics("eval", metrics)
 
     # Save the model and push to Hub
-    trainer.model.config.use_cache = (
-        True  # Re-enable KV cache so the saved config is ready for inference.
-    )
+    trainer.model.config.use_cache = True  # Re-enable KV cache so the saved config is ready for inference.
     trainer.save_model(training_args.output_dir)
     if training_args.push_to_hub:
         trainer.push_to_hub(dataset_name=specs[0].path)
 
     state.wait_for_everyone()  # Wait for all processes to finish
     # Only merge the model on the main process
-    if (
-        run_args.merge_after_training
-        and peft_config is not None
-        and state.is_main_process
-    ):
+    if run_args.merge_after_training and peft_config is not None and state.is_main_process:
         import os
 
         from vietllm.merge import merge_adapter
 
         merge_adapter(
             adapter_path=training_args.output_dir,
-            output_dir=run_args.merged_output_dir
-            or os.path.join(training_args.output_dir, "merged"),
+            output_dir=run_args.merged_output_dir or os.path.join(training_args.output_dir, "merged"),
             push_to_hub=run_args.push_merged_to_hub,
-            hub_model_id=(
-                (training_args.hub_model_id + "-merged")
-                if training_args.hub_model_id
-                else None
-            ),
+            hub_model_id=((training_args.hub_model_id + "-merged") if training_args.hub_model_id else None),
             trust_remote_code=training_args.trust_remote_code,
         )
 

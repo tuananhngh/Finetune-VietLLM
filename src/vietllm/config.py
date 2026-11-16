@@ -142,15 +142,15 @@ def parse_args(
     if unknown:
         raise ValueError(f"Unknown config keys: {unknown}")
     parser.set_defaults(**config)
-    parsed = parser.parse_args_into_dataclasses(args=argv)
 
-    # Without CUDA (Mac / CPU), swap CUDA-only options for portable ones and parse again.
+    # Without CUDA (Mac / CPU), swap CUDA-only options for portable ones. The overrides are computed
+    # from the raw values *before* building the dataclasses: TrainingArguments itself raises on
+    # e.g. bf16=True on a CPU-only machine, so the fallback must already be applied by then.
     if device_fallbacks:
         from .device import fallback_overrides
 
-        values = {f.name: getattr(obj, f.name) for obj in parsed for f in fields(obj)}
-        overrides = fallback_overrides(values)
-        if overrides:
-            extra = [tok for k, v in overrides.items() for tok in (f"--{k}", v)]
-            parsed = parser.parse_args_into_dataclasses(args=[*argv, *extra])
+        values, _ = parser.parse_known_args(args=argv)
+        overrides = fallback_overrides(vars(values))
+        argv += [tok for k, v in overrides.items() for tok in (f"--{k}", v)]
+    parsed = parser.parse_args_into_dataclasses(args=argv)
     return (*parsed, specs)

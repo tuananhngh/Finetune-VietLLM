@@ -43,7 +43,9 @@ def test_cpu_fallbacks():
 @pytest.mark.parametrize("device", ["cpu", "mps"])
 def test_cuda_recipe_parses_for_mac_or_cpu(monkeypatch, device):
     if device == "mps":
+        # Simulate a bf16-capable Mac, also for transformers' own check (CI VMs have no usable MPS).
         monkeypatch.setattr("vietllm.device.mps_supports_bf16", lambda: True)
+        monkeypatch.setattr("transformers.training_args.is_torch_bf16_gpu_available", lambda: True)
     monkeypatch.setenv("VIETLLM_DEVICE", device)
     model, train, *_ = parse_args(TYPES, ["--config", str(ROOT / "configs/sft/qwen3-8b-qlora-bactrian.yaml")])
     assert not model.load_in_4bit and not train.use_liger_kernel
@@ -52,7 +54,7 @@ def test_cuda_recipe_parses_for_mac_or_cpu(monkeypatch, device):
 
 def test_fallbacks_can_be_disabled(monkeypatch):
     monkeypatch.setenv("VIETLLM_DEVICE", "cpu")
-    model, *_ = parse_args(
-        TYPES, ["--config", str(ROOT / "configs/sft/qwen3-8b-qlora-bactrian.yaml")], device_fallbacks=False
-    )
+    # --bf16 false: without fallbacks, transformers itself rejects bf16 on a machine with no bf16 GPU.
+    argv = ["--config", str(ROOT / "configs/sft/qwen3-8b-qlora-bactrian.yaml"), "--bf16", "false"]
+    model, *_ = parse_args(TYPES, argv, device_fallbacks=False)
     assert model.load_in_4bit
