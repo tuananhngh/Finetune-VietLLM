@@ -1,6 +1,6 @@
 # Real (small) fine-tune on an Apple Silicon Mac GPU (MPS) to test the whole pipeline on actual
 # Vietnamese data before paying for a cloud GPU. 100 steps take ~7 min on an M3 Max (~500 tokens/s).
-#   make mac-test            (or: uv run python -m vietllm.train_sft --config configs/sft/mac-qwen3-0.6b.yaml)
+#   just mac-test            (or: uv run python -m vietllm.train_sft --config configs/sft/mac-qwen3-0.6b.yaml)
 # Same model family and chat template as the Qwen3-8B cloud recipe, so a run here validates the data,
 # masking and template before scaling up. Bump to Qwen/Qwen3-1.7B or -4B if you have 32 GB+ unified memory.
 

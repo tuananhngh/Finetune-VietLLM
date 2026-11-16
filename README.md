@@ -56,6 +56,7 @@ in `uv.lock`, and the Python version (3.12) in `.python-version`. uv creates `.v
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh     # once
+brew install just                                    # once: task runner for the `just <recipe>` shortcuts
 
 # GPU machine: choose the torch CUDA build that matches the NVIDIA driver (`nvidia-smi`)
 uv sync --extra tracking --extra cu126              # driver >= 525: torch 2.14 + CUDA 12.6 (safe default)
@@ -83,7 +84,7 @@ Dependency management:
 ```bash
 uv add <package>              # add a dependency (updates pyproject.toml + uv.lock)
 uv add --optional eval <pkg>  # add to an extra
-uv lock --upgrade             # bump everything to the newest allowed versions (make upgrade)
+uv lock --upgrade             # bump everything to the newest allowed versions (just upgrade)
 uv lock --upgrade-package trl # bump one package
 ```
 
@@ -96,7 +97,7 @@ Check everything works with the tiny model (no GPU needed, ~30 s). For a real ru
 [Testing on a Mac](#testing-on-a-mac-apple-silicon-gpu).
 
 ```bash
-make smoke
+just smoke
 ```
 
 Train:
@@ -127,8 +128,8 @@ Training and inference run on the Mac GPU through PyTorch's MPS backend: no CUDA
 is all you need.
 
 ```bash
-make mac-test     # real LoRA fine-tune: Qwen3-0.6B on 2,000 Bactrian-X vi rows, 100 steps, ~7 min on an M3 Max
-make mac-chat     # chat with the result
+just mac-test     # real LoRA fine-tune: Qwen3-0.6B on 2,000 Bactrian-X vi rows, 100 steps, ~7 min on an M3 Max
+just mac-chat     # chat with the result
 ```
 
 `configs/sft/mac-qwen3-0.6b.yaml` uses the same model family, chat template and loss masking as the Qwen3-8B cloud
@@ -219,8 +220,8 @@ Everything runs from the same Docker image, so RunPod is just one target.
 ### 1. Build and push the image
 
 ```bash
-make docker-push IMAGE=ghcr.io/<you>/vietllm:latest                       # CUDA 12.6, any recent host
-make docker-push IMAGE=ghcr.io/<you>/vietllm:cu132 TORCH_EXTRA=cu132      # CUDA 13.2, driver >= 580
+just IMAGE=ghcr.io/<you>/vietllm:latest docker-push                       # CUDA 12.6, any recent host
+just IMAGE=ghcr.io/<you>/vietllm:cu132 TORCH_EXTRA=cu132 docker-push      # CUDA 13.2, driver >= 580
 ```
 
 The image is built from `uv.lock` with `uv sync --frozen`, so it gets exactly the versions you tested locally.
@@ -298,8 +299,8 @@ with `wandb sync`). Use `report_to: tensorboard` or `none` if you prefer.
 
 ```bash
 uv sync --extra tracking   # dev group is installed by default
-make test     # unit tests: data formatting + every shipped config parses against the installed TRL
-make lint
+just test     # unit tests: data formatting + every shipped config parses against the installed TRL
+just lint
 uv run pytest -m slow   # end-to-end: tiny SFT → merge → generate, tiny DPO (downloads a few MB)
 ```
 
