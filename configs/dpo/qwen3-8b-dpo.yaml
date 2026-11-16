@@ -1,0 +1,45 @@
+# DPO on top of the SFT model. Run SFT first (with merge_after_training: true), then:
+#   python -m vietllm.train_dpo --config configs/dpo/qwen3-8b-dpo.yaml
+# Replace the example file with a real Vietnamese preference dataset (prompt / chosen / rejected).
+
+model_name_or_path: outputs/qwen3-8b-qlora-bactrian/merged
+dtype: bfloat16
+attn_implementation: sdpa
+use_peft: true
+load_in_4bit: true
+use_bnb_nested_quant: true
+lora_r: 16
+lora_alpha: 16
+use_rslora: true
+lora_dropout: 0.05
+lora_target_modules: all-linear
+
+datasets:
+  - path: data/examples/preference_vi.jsonl
+    format: preference
+eval_split_size: 0.05
+
+output_dir: outputs/qwen3-8b-dpo
+run_name: qwen3-8b-dpo
+beta: 0.1
+loss_type: [sigmoid]               # e.g. [ipo], [apo_zero], [sigmoid, sft] (RPO-style)
+max_length: 2048
+num_train_epochs: 1
+per_device_train_batch_size: 2
+per_device_eval_batch_size: 2
+gradient_accumulation_steps: 8
+gradient_checkpointing: true
+learning_rate: 5.0e-6
+lr_scheduler_type: cosine
+warmup_steps: 0.1               # float < 1 = ratio of total steps
+optim: paged_adamw_8bit
+bf16: true
+logging_steps: 10
+eval_strategy: steps
+eval_steps: 100
+save_steps: 100
+save_total_limit: 2
+report_to: wandb
+
+resume: auto
+merge_after_training: true

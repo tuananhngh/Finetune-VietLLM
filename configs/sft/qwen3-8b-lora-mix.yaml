@@ -1,0 +1,61 @@
+# bf16 LoRA SFT on a dataset mixture, multi-GPU (2-8x A100/H100 80GB) with DDP:
+#   bash scripts/train.sh configs/sft/qwen3-8b-lora-mix.yaml
+# Add more Vietnamese datasets to the `datasets` list; `max_samples` controls each one's weight.
+# Supported formats: alpaca | sharegpt | messages | prompt_response (see README).
+
+model_name_or_path: Qwen/Qwen3-8B
+dtype: bfloat16
+attn_implementation: sdpa
+use_peft: true
+lora_r: 64
+lora_alpha: 64
+use_rslora: true
+lora_dropout: 0.05
+lora_target_modules: all-linear
+
+datasets:
+  # Bactrian-X (Vietnamese split). Loaded from its raw file: the repo's loading script is not
+  # supported by datasets>=4.
+  - path: json
+    data_files: hf://datasets/MBZUAI/Bactrian-X/data/vi.json.gz
+    split: train
+    format: alpaca
+  - path: data/examples/sft_vi.jsonl        # your own data: one {"messages": [...]} per line
+    format: messages
+  # - path: <hub-id-of-a-sharegpt-style-vietnamese-dataset>
+  #   format: sharegpt
+  #   max_samples: 50000
+conversation_format: messages
+eval_split_size: 0.01
+max_eval_samples: 1000
+
+output_dir: outputs/qwen3-8b-lora-mix
+run_name: qwen3-8b-lora-mix
+max_length: 4096
+packing: true
+assistant_only_loss: true
+use_liger_kernel: true
+num_train_epochs: 2
+per_device_train_batch_size: 8
+per_device_eval_batch_size: 8
+gradient_accumulation_steps: 2
+gradient_checkpointing: true
+gradient_checkpointing_kwargs: {use_reentrant: false}
+ddp_find_unused_parameters: false
+learning_rate: 1.0e-4
+lr_scheduler_type: cosine
+warmup_steps: 0.03               # float < 1 = ratio of total steps
+optim: adamw_torch_fused
+bf16: true
+logging_steps: 10
+eval_strategy: steps
+eval_steps: 250
+save_strategy: steps
+save_steps: 250
+save_total_limit: 3
+dataloader_num_workers: 4
+report_to: wandb
+seed: 42
+
+resume: auto
+merge_after_training: true

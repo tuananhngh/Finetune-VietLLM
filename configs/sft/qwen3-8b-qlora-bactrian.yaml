@@ -1,0 +1,64 @@
+# QLoRA SFT of Qwen3-8B on the Vietnamese split of Bactrian-X (~67k instructions).
+# Fits one 24 GB GPU (RTX 4090 / A5000 / L4). On A100/H100 raise per_device_train_batch_size.
+#   python -m vietllm.train_sft --config configs/sft/qwen3-8b-qlora-bactrian.yaml
+
+# ---- model (trl.ModelConfig) ----
+model_name_or_path: Qwen/Qwen3-8B
+dtype: bfloat16
+attn_implementation: sdpa          # flash_attention_2 if flash-attn is installed
+use_peft: true
+load_in_4bit: true                 # QLoRA: NF4 base weights + double quantization
+bnb_4bit_quant_type: nf4
+use_bnb_nested_quant: true
+lora_r: 32
+lora_alpha: 32
+use_rslora: true                   # rank-stabilised scaling (alpha / sqrt(r))
+lora_dropout: 0.05
+lora_target_modules: all-linear
+
+# ---- data ----
+datasets:
+  # Bactrian-X (Vietnamese split). Loaded from its raw file: the repo's loading script is not
+  # supported by datasets>=4.
+  - path: json
+    data_files: hf://datasets/MBZUAI/Bactrian-X/data/vi.json.gz
+    split: train
+    format: alpaca
+conversation_format: messages
+eval_split_size: 0.01
+max_eval_samples: 500
+
+# ---- training (trl.SFTConfig / transformers.TrainingArguments) ----
+output_dir: outputs/qwen3-8b-qlora-bactrian
+run_name: qwen3-8b-qlora-bactrian
+max_length: 2048
+packing: true                      # best-fit-decreasing packing, padding-free
+assistant_only_loss: true          # loss only on assistant tokens
+use_liger_kernel: true             # fused kernels: less memory, faster (Linux + CUDA)
+num_train_epochs: 1
+per_device_train_batch_size: 4
+per_device_eval_batch_size: 4
+gradient_accumulation_steps: 4
+gradient_checkpointing: true
+learning_rate: 2.0e-4
+lr_scheduler_type: cosine
+warmup_steps: 0.03               # float < 1 = ratio of total steps
+weight_decay: 0.0
+max_grad_norm: 1.0
+optim: paged_adamw_8bit
+bf16: true
+logging_steps: 10
+eval_strategy: steps
+eval_steps: 200
+save_strategy: steps
+save_steps: 200
+save_total_limit: 3
+report_to: wandb
+seed: 42
+
+# ---- run ----
+resume: auto       # survives pod restarts / spot preemption
+merge_after_training: true
+# push_to_hub: true
+# hub_model_id: your-hf-name/qwen3-8b-vi-bactrian
+# hub_private_repo: true

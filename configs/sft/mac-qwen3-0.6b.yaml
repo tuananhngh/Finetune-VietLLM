@@ -1,0 +1,55 @@
+# Real (small) fine-tune on an Apple Silicon Mac GPU (MPS) to test the whole pipeline on actual
+# Vietnamese data before paying for a cloud GPU. 100 steps take ~7 min on an M3 Max (~500 tokens/s).
+#   make mac-test            (or: uv run python -m vietllm.train_sft --config configs/sft/mac-qwen3-0.6b.yaml)
+# Same model family and chat template as the Qwen3-8B cloud recipe, so a run here validates the data,
+# masking and template before scaling up. Bump to Qwen/Qwen3-1.7B or -4B if you have 32 GB+ unified memory.
+
+model_name_or_path: Qwen/Qwen3-0.6B
+dtype: bfloat16                    # MPS supports bf16 on macOS 14+
+attn_implementation: sdpa
+use_peft: true                     # plain LoRA (QLoRA / bitsandbytes is CUDA-only)
+lora_r: 16
+lora_alpha: 16
+use_rslora: true
+lora_dropout: 0.05
+lora_target_modules: all-linear
+
+datasets:
+  # Bactrian-X (Vietnamese split). Loaded from its raw file: the repo's loading script is not
+  # supported by datasets>=4.
+  - path: json
+    data_files: hf://datasets/MBZUAI/Bactrian-X/data/vi.json.gz
+    split: train
+    format: alpaca
+    max_samples: 2000
+conversation_format: messages
+eval_split_size: 0.05
+max_eval_samples: 100
+
+output_dir: outputs/mac-qwen3-0.6b
+run_name: mac-qwen3-0.6b
+max_length: 1024
+packing: false                     # padding-free packing is slower per token on MPS
+assistant_only_loss: true
+max_steps: 100
+per_device_train_batch_size: 4
+per_device_eval_batch_size: 4
+gradient_accumulation_steps: 2
+gradient_checkpointing: true
+learning_rate: 2.0e-4
+lr_scheduler_type: cosine
+warmup_steps: 0.05               # float < 1 = ratio of total steps
+optim: adamw_torch
+bf16: true
+dataloader_pin_memory: false
+logging_steps: 5
+eval_strategy: steps
+eval_steps: 50
+save_strategy: steps
+save_steps: 50
+save_total_limit: 1
+report_to: none
+seed: 42
+
+resume: auto
+merge_after_training: true

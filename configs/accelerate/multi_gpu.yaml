@@ -1,0 +1,10 @@
+# DDP: one full model copy per GPU. num_processes is overridden by scripts/train.sh.
+compute_environment: LOCAL_MACHINE
+distributed_type: MULTI_GPU
+mixed_precision: bf16
+num_machines: 1
+num_processes: 2
+machine_rank: 0
+main_training_function: main
+rdzv_backend: static
+same_network: true

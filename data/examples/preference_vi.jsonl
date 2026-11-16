@@ -1,0 +1,6 @@
+{"prompt": "Thủ đô của Việt Nam là gì?", "chosen": "Thủ đô của Việt Nam là Hà Nội.", "rejected": "Thủ đô của Việt Nam là Thành phố Hồ Chí Minh."}
+{"prompt": "Nước sôi ở bao nhiêu độ C (ở áp suất tiêu chuẩn)?", "chosen": "Ở áp suất khí quyển tiêu chuẩn, nước sôi ở 100 °C.", "rejected": "Nước sôi ở 50 độ."}
+{"prompt": "Hãy chào tôi một cách lịch sự.", "chosen": "Xin chào bạn! Rất vui được trò chuyện cùng bạn hôm nay. Tôi có thể giúp gì cho bạn?", "rejected": "Ừ, chào."}
+{"prompt": "Việt Nam có bao nhiêu tỉnh thành sau sáp nhập năm 2025?", "chosen": "Sau khi sắp xếp đơn vị hành chính năm 2025, Việt Nam có 34 đơn vị hành chính cấp tỉnh, gồm 28 tỉnh và 6 thành phố trực thuộc trung ương.", "rejected": "Việt Nam có 100 tỉnh."}
+{"prompt": "Giải thích từ 'tri thức'.", "chosen": "'Tri thức' là những hiểu biết, kiến thức mà con người tích luỹ được qua học tập và trải nghiệm.", "rejected": "Tri thức là một loại cây."}
+{"prompt": "2 + 2 bằng mấy?", "chosen": "2 + 2 = 4.", "rejected": "2 + 2 = 5."}

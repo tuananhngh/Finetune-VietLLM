@@ -1,0 +1,94 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vietllm"
+version = "0.2.0"
+description = "Fine-tune Vietnamese LLMs (SFT + DPO, LoRA/QLoRA/DoRA) on a local or cloud GPU."
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+license = { text = "MIT" }
+dependencies = [
+    "torch>=2.14",
+    "transformers>=5.20,<6",
+    "trl>=1.18,<2",
+    "peft>=0.21",
+    "datasets>=5.0",
+    "accelerate>=1.15",
+    "huggingface_hub>=2.0",
+    "hf_transfer>=0.1.9",
+    "pyyaml>=6.0.3",
+    "rich>=15.0",
+    # CUDA-only packages are guarded so `uv sync` also works on macOS for development and tests.
+    "bitsandbytes>=0.50; sys_platform == 'linux'",
+    "liger-kernel>=0.8; sys_platform == 'linux'",
+]
+
+[project.optional-dependencies]
+# Experiment tracking.
+tracking = ["wandb>=0.31", "tensorboard>=2.21"]
+# DeepSpeed ZeRO (Linux only; built from source against the installed torch).
+deepspeed = ["deepspeed>=0.20; sys_platform == 'linux'"]
+# Benchmarks with lm-evaluation-harness (HF backend). The vLLM backend runs in its own env via `uvx`.
+eval = ["lm-eval[hf,multilingual]>=0.4.13"]
+# PyTorch CUDA builds. PyPI's default Linux wheel is the newest torch built for CUDA 13.2 (driver >= 580).
+# Hosts with an older NVIDIA driver (535-570) use `--extra cu126`, which pins torch 2.14 + CUDA 12.6.
+cu126 = ["torch==2.14.*"]
+cu132 = ["torch>=2.15"]
+
+[project.scripts]
+vietllm-sft = "vietllm.train_sft:main"
+vietllm-dpo = "vietllm.train_dpo:main"
+vietllm-merge = "vietllm.merge:main"
+vietllm-chat = "vietllm.infer:main"
+vietllm-eval = "vietllm.evaluate:main"
+
+[dependency-groups]
+dev = ["pytest>=9.2", "ruff>=0.17", "mypy>=2.4"]
+
+# ------------------------------------------------------------------------------------------------
+# uv
+# ------------------------------------------------------------------------------------------------
+[tool.uv]
+default-groups = ["dev"]
+conflicts = [[{ extra = "cu126" }, { extra = "cu132" }]]
+
+[tool.uv.extra-build-dependencies]
+deepspeed = [{ requirement = "torch", match-runtime = true }]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu126", extra = "cu126", marker = "sys_platform == 'linux'" },
+    { index = "pytorch-cu132", extra = "cu132", marker = "sys_platform == 'linux'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu132"
+url = "https://download.pytorch.org/whl/cu132"
+explicit = true
+
+# ------------------------------------------------------------------------------------------------
+# tooling
+# ------------------------------------------------------------------------------------------------
+[tool.hatch.build.targets.wheel]
+packages = ["src/vietllm"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: downloads a tiny model from the Hugging Face Hub and trains for a few steps"]
