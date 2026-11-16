@@ -1,0 +1,9 @@
+**/__pycache__/
+.claude/
+.git/
+.pytest_cache/
+.ruff_cache/
+.venv/
+outputs/
+reports/
+wandb/

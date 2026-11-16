@@ -1,0 +1,42 @@
+# Run on ANY cloud SkyPilot supports (RunPod, Lambda, Vast, AWS, GCP, Azure, Nebius, k8s…),
+# picking the cheapest available GPU from the list below.
+#
+#   uv tool install "skypilot[runpod,aws,gcp]" && sky check     # install the clouds you use
+#   sky launch -c vietllm cloud/skypilot/sft.yaml --env HF_TOKEN --env WANDB_API_KEY
+#   sky launch -c vietllm cloud/skypilot/sft.yaml --env CONFIG=configs/sft/qwen3-8b-lora-mix.yaml \
+#       --gpus H100:4 --env HF_TOKEN
+#   sky logs vietllm    |   sky down vietllm
+name: vietllm-sft
+
+resources:
+  accelerators: {L40S:1, A100-80GB:1, H100:1, RTX4090:1, A6000:1}
+  disk_size: 200
+  # cloud: runpod          # pin a provider
+  # use_spot: true         # cheaper; training resumes from the last checkpoint after preemption
+
+workdir: .
+
+envs:
+  CONFIG: configs/sft/qwen3-8b-qlora-bactrian.yaml
+  EXTRA_ARGS: ""
+  TORCH_EXTRA: cu126       # cu132 for hosts with NVIDIA driver >= 580
+  HF_TOKEN: ""             # pass with --env HF_TOKEN (read from your local environment)
+  WANDB_API_KEY: ""
+
+# Persist checkpoints in a bucket so spot preemptions / cluster teardown lose nothing.
+# file_mounts:
+#   ~/sky_workdir/outputs:
+#     name: vietllm-outputs-<unique-suffix>
+#     mode: MOUNT_CACHED
+
+setup: |
+  set -e
+  command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
+  export PATH="$HOME/.local/bin:$PATH"
+  uv sync --frozen --no-dev --extra tracking --extra deepspeed --extra "$TORCH_EXTRA"
+
+run: |
+  set -e
+  export PATH="$HOME/.local/bin:$PATH"
+  export NUM_GPUS=$SKYPILOT_NUM_GPUS_PER_NODE
+  bash scripts/train.sh "$CONFIG" "" $EXTRA_ARGS

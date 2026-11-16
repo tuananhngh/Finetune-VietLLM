@@ -1,0 +1,35 @@
+# Tiny end-to-end run (CPU / Mac / any GPU, ~1 min) to check the install and data pipeline:
+#   python -m vietllm.train_sft --config configs/sft/smoke-test.yaml
+model_name_or_path: trl-internal-testing/tiny-Qwen3ForCausalLM
+dtype: float32
+use_peft: true
+lora_r: 8
+lora_alpha: 16
+lora_target_modules: all-linear
+
+datasets:
+  - path: data/examples/sft_vi.jsonl
+    format: messages
+  - path: data/examples/alpaca_vi.jsonl
+    format: alpaca
+conversation_format: messages
+eval_split_size: 0.2
+
+output_dir: outputs/smoke-test
+max_length: 512
+packing: true
+assistant_only_loss: true
+max_steps: 4
+per_device_train_batch_size: 2
+per_device_eval_batch_size: 2
+learning_rate: 1.0e-3
+logging_steps: 1
+eval_strategy: steps
+eval_steps: 2
+save_steps: 2
+save_total_limit: 1
+report_to: none
+bf16: false
+
+resume: none
+merge_after_training: true

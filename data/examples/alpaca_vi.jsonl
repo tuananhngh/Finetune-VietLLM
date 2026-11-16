@@ -1,0 +1,6 @@
+{"instruction": "Tóm tắt câu sau trong một vài từ.", "input": "Hôm nay trời mưa rất to nên tôi quyết định ở nhà đọc sách thay vì đi chơi.", "output": "Mưa to, ở nhà đọc sách."}
+{"instruction": "Tính tổng của 15 và 27.", "input": "", "output": "15 + 27 = 42."}
+{"instruction": "Phân loại cảm xúc của câu sau là tích cực hay tiêu cực.", "input": "Bộ phim này thật tuyệt vời, tôi muốn xem lại lần nữa!", "output": "Tích cực."}
+{"instruction": "Đưa ra một từ đồng nghĩa với 'xinh đẹp'.", "input": "", "output": "Một từ đồng nghĩa với 'xinh đẹp' là 'duyên dáng'."}
+{"instruction": "Sửa lỗi chính tả trong câu sau.", "input": "Tôi rất thik ăn bánh mỳ.", "output": "Tôi rất thích ăn bánh mì."}
+{"instruction": "Hãy tính 30 triệu đô la ra tiền Việt, biết 1 USD = 25.000 VND.", "input": "", "output": "30.000.000 USD × 25.000 VND = 750.000.000.000 VND, tức 750 tỷ đồng."}
