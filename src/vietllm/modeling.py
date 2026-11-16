@@ -30,13 +30,19 @@ def resolve_dtype(model_args: ModelConfig) -> torch.dtype | str:
     if isinstance(dtype, str):
         dtype = getattr(torch, dtype)
     # bf16 needs Ampere+ (A100, A6000, L4, L40S, RTX 30xx/40xx/50xx, H100…). Fall back on older GPUs.
-    if dtype == torch.bfloat16 and torch.cuda.is_available() and not torch.cuda.is_bf16_supported():
+    if (
+        dtype == torch.bfloat16
+        and torch.cuda.is_available()
+        and not torch.cuda.is_bf16_supported()
+    ):
         logger.warning("GPU does not support bfloat16, falling back to float16")
         dtype = torch.float16
     return dtype
 
 
-def model_init_kwargs(model_args: ModelConfig, use_cache: bool = False) -> dict[str, Any]:
+def model_init_kwargs(
+    model_args: ModelConfig, use_cache: bool = False
+) -> dict[str, Any]:
     """kwargs forwarded by TRL to ``AutoModelForCausalLM.from_pretrained``."""
     kwargs: dict[str, Any] = {
         "revision": model_args.model_revision,
@@ -61,11 +67,15 @@ def quantization_and_peft(model_args: ModelConfig):
     quant = get_quantization_config(model_args)
     peft = get_peft_config(model_args)
     if quant is not None and peft is None:
-        raise ValueError("A quantized base model can only be fine-tuned with an adapter: set use_peft: true")
+        raise ValueError(
+            "A quantized base model can only be fine-tuned with an adapter: set use_peft: true"
+        )
     return quant, peft
 
 
-def load_tokenizer(model_args: ModelConfig, trust_remote_code: bool = False) -> PreTrainedTokenizerBase:
+def load_tokenizer(
+    model_args: ModelConfig, trust_remote_code: bool = False
+) -> PreTrainedTokenizerBase:
     tok = AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         revision=model_args.model_revision,
@@ -73,7 +83,13 @@ def load_tokenizer(model_args: ModelConfig, trust_remote_code: bool = False) -> 
     )
     if tok.pad_token is None:
         # Avoid padding with EOS: EOS labels could get masked and the model would never learn to stop.
-        for candidate in ("<|finetune_right_pad_id|>", "<|fim_pad|>", "<pad>", "[PAD]", "<unk>"):
+        for candidate in (
+            "<|finetune_right_pad_id|>",
+            "<|fim_pad|>",
+            "<pad>",
+            "[PAD]",
+            "<unk>",
+        ):
             if candidate in tok.get_vocab():
                 tok.pad_token = candidate
                 break
@@ -98,4 +114,9 @@ def find_resume_checkpoint(resume: str, output_dir: str) -> str | None:
 def log_trainable_parameters(model) -> None:
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     total = sum(p.numel() for p in model.parameters())
-    logger.info("Trainable params: %s / %s (%.3f%%)", f"{trainable:,}", f"{total:,}", 100 * trainable / total)
+    logger.info(
+        "Trainable params: %s / %s (%.3f%%)",
+        f"{trainable:,}",
+        f"{total:,}",
+        100 * trainable / total,
+    )

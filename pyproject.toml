@@ -41,7 +41,7 @@ cu132 = ["torch>=2.15"]
 vietllm-sft = "vietllm.train_sft:main"
 vietllm-dpo = "vietllm.train_dpo:main"
 vietllm-merge = "vietllm.merge:main"
-vietllm-chat = "vietllm.infer:main"
+vietllm-chat = "vietllm.inference:main"
 vietllm-eval = "vietllm.evaluate:main"
 
 [dependency-groups]
